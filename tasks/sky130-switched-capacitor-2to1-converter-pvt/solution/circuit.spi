@@ -1,0 +1,86 @@
+.subckt sc_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+.ends sc_inv
+
+.subckt sc_inv2 a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=1
+.ends sc_inv2
+
+.subckt sc_inv8 a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=16 nf=4
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+.ends sc_inv8
+
+.subckt sc_nand a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+.ends sc_nand
+
+.subckt sc_2to1_converter vss vdd clk vout
+* ---- clock receiver and non-overlap two-phase generator ----
+XRX1 clk ckb vdd vss sc_inv
+XRX2 ckb ck vdd vss sc_inv
+XNA ck fb2 n1 vdd vss sc_nand
+XA1 n1 a1 vdd vss sc_inv
+XA2 a1 a2 vdd vss sc_inv
+XA3 a2 s1 vdd vss sc_inv2
+XFB1 s1 fb1 vdd vss sc_inv
+XNB ckb fb1 n2 vdd vss sc_nand
+XB1 n2 b1 vdd vss sc_inv
+XB2 b1 b2 vdd vss sc_inv
+XB3 b2 s2 vdd vss sc_inv2
+XFB2 s2 fb2 vdd vss sc_inv
+* ---- gate drivers branch A (series on s1, parallel on s2) ----
+XDPA s1 p1ga vdd vss sc_inv8
+XDN3A1 s1 n3pa vdd vss sc_inv2
+XDN3A2 n3pa n3ga vdd vss sc_inv8
+XDNPA1 s2 nppa vdd vss sc_inv2
+XDNPA2 nppa npga vdd vss sc_inv8
+* ---- gate drivers branch B (series on s2, parallel on s1) ----
+XDPB s2 p1gb vdd vss sc_inv8
+XDN3B1 s2 n3pb vdd vss sc_inv2
+XDN3B2 n3pb n3gb vdd vss sc_inv8
+XDNPB1 s1 nppb vdd vss sc_inv2
+XDNPB2 nppb npgb vdd vss sc_inv8
+* ---- power stage branch A ----
+XP1A cta p1ga vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=96 nf=24
+XN3A cba n3ga vout vss sky130_fd_pr__nfet_01v8 l=0.15 w=128 nf=32
+XN2A cta npga vout vss sky130_fd_pr__nfet_01v8 l=0.15 w=128 nf=32
+XN4A cba npga vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=48 nf=12
+XCFA1 cta cba sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFA2 cta cba sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFA3 cta cba sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFA4 cta cba sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFA5 cta cba sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCBPA cba vss sky130_fd_pr__cap_mim_m3_1 w=20 l=50 mult=1
+* ---- power stage branch B ----
+XP1B ctb p1gb vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=96 nf=24
+XN3B cbb n3gb vout vss sky130_fd_pr__nfet_01v8 l=0.15 w=128 nf=32
+XN2B ctb npgb vout vss sky130_fd_pr__nfet_01v8 l=0.15 w=128 nf=32
+XN4B cbb npgb vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=48 nf=12
+XCFB1 ctb cbb sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFB2 ctb cbb sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFB3 ctb cbb sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFB4 ctb cbb sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCFB5 ctb cbb sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCBPB cbb vss sky130_fd_pr__cap_mim_m3_1 w=20 l=50 mult=1
+* ---- output capacitor ----
+XCO01 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO02 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO03 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO04 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO05 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO06 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO07 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO08 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO09 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO10 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO11 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO12 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO13 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+XCO14 vout vss sky130_fd_pr__cap_mim_m3_1 w=100 l=100 mult=1
+.ends sc_2to1_converter
