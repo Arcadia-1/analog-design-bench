@@ -1,0 +1,51 @@
+* Sky130 transistor-level rising-edge divide-by-two flip-flop.
+
+.subckt div2_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2.4 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2.4 nf=1
+.ends div2_inv
+
+.subckt div2_nor2 a b y vdd vss
+XP0 pmid a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2.4 nf=1
+XP1 y b pmid vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2.4 nf=1
+XN0 y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2.4 nf=1
+XN1 y b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2.4 nf=1
+.ends div2_nor2
+
+.subckt div2_tg a y g gb vdd vss
+XN a g y vss sky130_fd_pr__nfet_01v8 l=0.15 w=2.4 nf=1
+XP a gb y vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2.4 nf=1
+.ends div2_tg
+
+.subckt div2_buf0 a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=1.2 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4.8 nf=1
+.ends div2_buf0
+
+.subckt div2_buf1 a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=10 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=0.9 nf=1
+.ends div2_buf1
+
+* Master-slave D flip-flop with asynchronous reset.
+.subckt div2_dffr d ckb cki reset q vdd vss
+XTGM d mm ckb cki vdd vss div2_tg
+XI0 mm mmb vdd vss div2_inv
+XI1 mmb mfb vdd vss div2_inv
+XTGF mfb mm cki ckb vdd vss div2_tg
+XTGS mmb sm cki ckb vdd vss div2_tg
+XNQ sm reset q vdd vss div2_nor2
+XI2 q sfb vdd vss div2_inv
+XTGB sfb sm ckb cki vdd vss div2_tg
+.ends div2_dffr
+
+.subckt divide_by_2 clk reset vdd vss clkout
+XCLK0 clk ckb vdd vss div2_inv
+XCLK1 ckb cki vdd vss div2_inv
+XFB qstate d vdd vss div2_inv
+XFF d ckb cki reset qstate vdd vss div2_dffr
+CSTATE qstate vss 18f
+XBUF0 qstate qb vdd vss div2_buf0
+XBUF1 qb clkout vdd vss div2_buf1
+XOUTRST clkout reset vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4.8 nf=1
+.ends divide_by_2
