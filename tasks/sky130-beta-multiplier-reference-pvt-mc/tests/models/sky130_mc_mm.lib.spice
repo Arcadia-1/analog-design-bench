@@ -1,0 +1,5 @@
+* Sky130 continuous-model wrapper for combined process and local mismatch.
+.lib mc_mm
+.lib "/opt/sky130/continuous/sky130.lib.spice" mc
+.param MC_MM_SWITCH=1
+.endl mc_mm
