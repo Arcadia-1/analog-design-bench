@@ -1,0 +1,4 @@
+* Implement the two-stage Miller op amp using Sky130 1.8 V MOS devices and R/C.
+.subckt two_stage_miller_opamp vss iref vdd vinn vinp vout
+* TODO
+.ends two_stage_miller_opamp

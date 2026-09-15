@@ -1,0 +1,4 @@
+* Implement the fully differential sampling-feedback OTA here.
+.subckt sampling_feedback_ota vss iref vdd vinn vinp vocm voutn voutp
+* TODO
+.ends sampling_feedback_ota

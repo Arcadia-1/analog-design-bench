@@ -1,0 +1,34 @@
+* Mechanically normalized from Ying Haochi's completed Virtuoso design.
+.subckt bandgap AVDD AVSS VBG SUB
+XNM7 net037 net028 AVSS AVSS sky130_fd_pr__nfet_01v8_lvt w=5 l=2 as=1.325 ad=1.325 ps=10.53 pd=10.53 m=1 mult=1
+XNM6 net028 net012 AVSS AVSS sky130_fd_pr__nfet_01v8_lvt w=2 l=1 as=0.53 ad=0.53 ps=4.53 pd=4.53 m=1 mult=1
+XNM5 net012 net012 AVSS AVSS sky130_fd_pr__nfet_01v8_lvt w=2 l=1 as=0.53 ad=0.53 ps=4.53 pd=4.53 m=1 mult=1
+XNM9 net031 VBN net052 AVSS sky130_fd_pr__nfet_01v8_lvt w=10 l=1 nf=2 as=2.65 ad=2.65 ps=20.53 pd=20.53 m=3 mult=3
+XNM10 net037 net031 AVSS AVSS sky130_fd_pr__nfet_01v8_lvt w=10 l=0.3 nf=2 as=2.65 ad=2.65 ps=20.53 pd=20.53 m=1 mult=1
+XNM8 VBN VBN net053 AVSS sky130_fd_pr__nfet_01v8_lvt w=10 l=1 nf=2 as=2.65 ad=2.65 ps=20.53 pd=20.53 m=3 mult=3
+XPM8 net037 net037 net043 AVDD sky130_fd_pr__pfet_01v8 w=2 l=0.3 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=16 mult=16
+XPM5 net029 net037 net036 AVDD sky130_fd_pr__pfet_01v8 w=2 l=0.3 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=16 mult=16
+XPM4 AMP_VN net037 net034 AVDD sky130_fd_pr__pfet_01v8 w=2 l=0.3 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=16 mult=16
+XPM2 net016 net037 net019 AVDD sky130_fd_pr__pfet_01v8 w=2 l=0.3 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=16 mult=16
+XPM9 VBN net037 net035 AVDD sky130_fd_pr__pfet_01v8 w=2 l=0.3 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=16 mult=16
+XQ0 AVSS AVSS net020 sky130_fd_pr__pnp_05v5_W0p68L0p68 m=36 mult=36
+XQ1 AVSS AVSS AMP_VN sky130_fd_pr__pnp_05v5_W0p68L0p68 m=1 mult=1
+XR33 AVDD net034 SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR29 net052 AVSS SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR19 net016 AMP_VP SUB sky130_fd_pr__res_xhigh_po l=60 w=1.41
+XR18 net016 AMP_VP SUB sky130_fd_pr__res_xhigh_po l=75 w=1.41
+XR26 net028 net039 SUB sky130_fd_pr__res_xhigh_po l=3 w=1.41
+XR17 net016 AMP_VP SUB sky130_fd_pr__res_xhigh_po l=75 w=1.41
+XR30 net053 AVSS SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR34 AVDD net036 SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR25 net016 VBG SUB sky130_fd_pr__res_xhigh_po l=300 w=1.41
+XR8 AVDD net035 SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR16 AMP_VP net020 SUB sky130_fd_pr__res_xhigh_po l=15 w=2.82
+XR6 AVDD net043 SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR4 AVDD net019 SUB sky130_fd_pr__res_xhigh_po l=3.75 w=1.41
+XR3 AVDD net031 SUB sky130_fd_pr__res_xhigh_po l=45 w=0.35
+XPM7 net028 AMP_VP net029 net029 sky130_fd_pr__pfet_01v8_lvt w=2 l=1 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=8 mult=8
+XPM6 net012 AMP_VN net029 net029 sky130_fd_pr__pfet_01v8_lvt w=2 l=1 as=0.405 ad=0.28 ps=3.405 pd=2.28 m=8 mult=8
+XC1 VBG AVSS sky130_fd_pr__cap_mim_m3_1 l=25 w=25 m=20 mult=20
+XC0 net039 net037 sky130_fd_pr__cap_mim_m3_1 l=25 w=25 m=3 mult=3
+.ends bandgap

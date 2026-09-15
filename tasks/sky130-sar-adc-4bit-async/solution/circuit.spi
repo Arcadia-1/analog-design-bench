@@ -1,0 +1,184 @@
+* Sky130 port of the four-bit asynchronous differential SAR ADC reference.
+* The original bootstrap, CDAC, comparator, and VALID-driven control are retained.
+.subckt sar4_clock_inv a y vdd vss
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=16
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=32 nf=16
+.ends sar4_clock_inv
+
+.subckt sar4_delay_inv a y vdd vss
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+.ends sar4_delay_inv
+
+.subckt sar4_cmp_delay out outn inp inn vdd
+* A minimum-length tapered buffer pair drives the comparator handshake clock.
+XI1 inp d1 vdd inn sar4_delay_inv
+XI2 d1 out vdd outn sar4_drive_inv
+.ends sar4_cmp_delay
+
+.subckt sar_comparator clk outn outp vss vdd vinn vinp
+XM7 XP CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM9 XN CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM5 OUTN LN VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM4 OUTP LP VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM3 LN CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM2 LP CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM1 LN LP VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XM0 LP LN VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XM14 net1 CLK VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+XM13 XN VINN net1 VSS sky130_fd_pr__nfet_01v8 l=0.15 w=20 nf=20
+XM12 XP VINP net1 VSS sky130_fd_pr__nfet_01v8 l=0.15 w=20 nf=20
+XM11 OUTN LN VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM10 OUTP LP VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM8 LN LP XN VSS sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+XM6 LP LN XP VSS sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+.ends sar_comparator
+.subckt sar4_bootstrap_switch clks gnd vdd vin vout
+XM9 net4 CLKS net3 GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM8 net4 GATE net3 GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM10 CLKSB CLKS GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM4 net2 CLKSB GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM3 GATE VDD net2 GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM2 VIN GATE VOUT GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM1 net3 GATE VIN GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM0 net3 CLKSB GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM11 CLKSB CLKS VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM7 net4 CLKS VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM6 GATE net4 net1 net1 sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM5 VDD GATE net1 net1 sky130_fd_pr__pfet_01v8 l=0.15 w=6 nf=2
+C0 net1 net3 1p
+.ends sar4_bootstrap_switch
+.subckt sar4_cdac_half_4bit clks dctrl3 dctrl2 dctrl1 gnd vdd vin vrefn  vrefp vtop
+XI4 CLKS GND VDD VIN VTOP sar4_bootstrap_switch
+C3 VTOP GND 50f
+C2 VTOP VBOT1 50f
+C1 VTOP VBOT2 100f
+C0 VTOP VBOT3 200f
+XM2 VBOT1 DCTRL1 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=6 nf=2
+XM1 VBOT2 DCTRL2 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM0 VBOT3 DCTRL3 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=8
+XM5 VBOT1 DCTRL1 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM4 VBOT2 DCTRL2 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+XM3 VBOT3 DCTRL3 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+.ends sar4_cdac_half_4bit
+.subckt sar4_std_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+.ends sar4_std_inv
+
+.subckt sar4_drive_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+.ends sar4_drive_inv
+
+.subckt sar4_medium_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+.ends sar4_medium_inv
+
+.subckt sar4_cdac_output_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=16 nf=8
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+.ends sar4_cdac_output_inv
+
+.subckt sar4_cdac_inv_x8 a y vdd vss
+XI a y vdd vss sar4_cdac_output_inv
+.ends sar4_cdac_inv_x8
+
+.subckt sar4_std_nand2 a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=1
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=1
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+.ends sar4_std_nand2
+
+.subckt sar4_std_tg a b en enb vdd vss
+XN a en b vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=1
+XP a enb b vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+.ends sar4_std_tg
+
+.subckt sar4_std_latch d q en enb vdd vss
+XTI d x en enb vdd vss sar4_std_tg
+XI1 x xb vdd vss sar4_std_inv
+XI2 xb q vdd vss sar4_drive_inv
+XTF q x enb en vdd vss sar4_std_tg
+.ends sar4_std_latch
+
+.subckt sar4_std_latch_reset d q en enb rst vdd vss
+XTI d x en enb vdd vss sar4_std_tg
+XI1 x xb vdd vss sar4_std_inv
+XI2 xb q vdd vss sar4_drive_inv
+XTF q x enb en vdd vss sar4_std_tg
+XR x rst vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=4
+.ends sar4_std_latch_reset
+
+.subckt sar4_and2_x1 y vdd vss a b
+XN a b yn vdd vss sar4_std_nand2
+XI yn y vdd vss sar4_std_inv
+.ends sar4_and2_x1
+
+.subckt sar4_or2_x4 y vdd vss a b
+XIA a an vdd vss sar4_std_inv
+XIB b bn vdd vss sar4_std_inv
+XN an bn y vdd vss sar4_std_nand2
+.ends sar4_or2_x4
+
+.subckt sar4_inverter_x1 y vdd vss a
+XI a y vdd vss sar4_std_inv
+.ends sar4_inverter_x1
+
+.subckt sar4_inverter_x4 y vdd vss a
+XI a y vdd vss sar4_std_inv
+.ends sar4_inverter_x4
+
+.subckt sar4_dff_x1 q vdd vss ck d
+XIC ck ckb vdd vss sar4_medium_inv
+XLM d qm ckb ck vdd vss sar4_std_latch
+XLS qm q ck ckb vdd vss sar4_std_latch
+.ends sar4_dff_x1
+
+.subckt sar4_dff_reset_x1 q vdd vss ck d rn
+XIC ck ckb vdd vss sar4_medium_inv
+XIR rn rst vdd vss sar4_drive_inv
+XLM d qm ckb ck rst vdd vss sar4_std_latch_reset
+XLS qm q ck ckb rst vdd vss sar4_std_latch_reset
+.ends sar4_dff_reset_x1
+.subckt sar4_async_logic_4bit clkc clks cmpck dcmpn dcmpp dctrln3  dctrln2 dctrln1 dctrlp3 dctrlp2 dctrlp1  do3 do2 do1 do0 gnd vdd
+XI76 DCTRLN0 VDD GND net26 CLK0 sar4_and2_x1
+XI67 DCTRLP0 VDD GND net28 CLK0 sar4_and2_x1
+XI55 net11 VDD GND net3 CLK_GATE sar4_and2_x1
+XI53 CLK_GATE VDD GND CLKC RDYB sar4_and2_x1
+XI77 net26 VDD GND CLK0 DCMPN sar4_dff_x1
+* Lower weights use the driven Q output directly. The MSB uses a tapered
+* inverting driver to obtain its high reset state and drive the largest load.
+XI75 DCTRLN1 VDD GND CLK1 DCMPN CLKC sar4_dff_reset_x1
+XI73 DCTRLN2 VDD GND CLK2 DCMPN CLKC sar4_dff_reset_x1
+XI71 DCTRLN3_RAW VDD GND CLK3 DCMPP CLKC sar4_dff_reset_x1
+XI68 net28 VDD GND CLK0 DCMPP sar4_dff_x1
+XI65 DCTRLP1 VDD GND CLK1 DCMPP CLKC sar4_dff_reset_x1
+* The final VALID return generates EOC after the LSB decision is stored.
+XIEOC EOC VDD GND CLK0 net3 sar4_and2_x1
+XI60 DO0 VDD GND EOC DCTRLP0 sar4_dff_x1
+XI58 DO1 VDD GND EOC DCTRLP1 sar4_dff_x1
+XI57 DO2 VDD GND EOC DCTRLP2 sar4_dff_x1
+XI56 DO3 VDD GND EOC DCTRLP3 sar4_dff_x1
+XI45 DCTRLP2 VDD GND CLK2 DCMPP CLKC sar4_dff_reset_x1
+XI44 DCTRLP3_RAW VDD GND CLK3 DCMPN CLKC sar4_dff_reset_x1
+XBN3 DCTRLN3_RAW DCTRLN3 VDD GND sar4_cdac_inv_x8
+XBP3 DCTRLP3_RAW DCTRLP3 VDD GND sar4_cdac_inv_x8
+XI42 RDYB VDD GND CLK0 sar4_inverter_x4
+XDELAY0 CMPCK GND net11 GND VDD sar4_cmp_delay
+XI41 CLK0 VDD GND VALID CLK1 CLKC sar4_dff_reset_x1
+XI40 CLK1 VDD GND VALID CLK2 CLKC sar4_dff_reset_x1
+XI39 CLK2 VDD GND VALID CLK3 CLKC sar4_dff_reset_x1
+XI38 CLK3 VDD GND VALID VDD CLKC sar4_dff_reset_x1
+XI52 VALID VDD GND DCMPP DCMPN sar4_or2_x4
+XI54 net3 VDD GND VALID sar4_inverter_x1
+.ends sar4_async_logic_4bit
+.subckt sar_adc_4bit_async clks dout3 dout2 dout1 dout0 vss vdd vinn vinp vrefn vrefp
+XCLKC CLKS CLKC VDD VSS sar4_clock_inv
+XI11 CMPCK DCMPN DCMPP VSS VDD VRESN VRESP sar_comparator
+XI10 CLKS DCTRLP3 DCTRLP2 DCTRLP1 VSS VDD VINP VREFN VREFP  VRESP sar4_cdac_half_4bit
+XI9 CLKS DCTRLN3 DCTRLN2 DCTRLN1 VSS VDD VINN VREFN VREFP  VRESN sar4_cdac_half_4bit
+XI12 CLKC CLKS CMPCK DCMPN DCMPP DCTRLN3 DCTRLN2 DCTRLN1  DCTRLP3 DCTRLP2 DCTRLP1 DOUT3 DOUT2 DOUT1  DOUT0 VSS VDD sar4_async_logic_4bit
+.ends sar_adc_4bit_async

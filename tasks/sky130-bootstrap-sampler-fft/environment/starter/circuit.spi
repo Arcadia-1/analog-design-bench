@@ -1,0 +1,4 @@
+* Drive gatep and gaten with a differential bootstrap circuit.
+.subckt bootstrap_gate_driver vdd vss clk vinp vinn gatep gaten
+* Your circuit here.
+.ends bootstrap_gate_driver

@@ -682,7 +682,7 @@ def run_simulation(argv: list[str]) -> int:
     spec = SPEC
     work = jobs(spec, args.smoke)
     started = time.monotonic()
-    workers = min(8, os.cpu_count() or 1)
+    workers = min(4, os.cpu_count() or 1)
     with ThreadPoolExecutor(max_workers=workers) as executor:
         rows = list(executor.map(lambda item: run_one(item, args, spec), work))
     wall = time.monotonic() - started

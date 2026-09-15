@@ -1,0 +1,34 @@
+* Two-stage Monticelli class-AB line driver.
+.subckt low_power_line_driver vss iref vdd vinn vinp vout
+* Bias network derived from the external 50 uA reference.
+XMB0 iref iref vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=120 nf=10
+XMBT tail iref vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=48 nf=4
+XMB1 pbias iref vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=24 nf=2
+XMB2 vbp iref vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=12 nf=1
+XMPB0 pbias pbias vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=51.2 nf=4
+XMPB1 vbn pbias vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=25.6 nf=2
+XMNT2 vbn vbn midn vss sky130_fd_pr__nfet_01v8 l=0.3 w=3.8 nf=1
+XMNT1 midn midn vss vss sky130_fd_pr__nfet_01v8 l=0.3 w=5.8 nf=1
+XMPT1 midp midp vdd vdd sky130_fd_pr__pfet_01v8 l=0.3 w=25.2 nf=2
+RSH midp vbp 100k
+* First stage.
+XM1 x3 vinp tail vss sky130_fd_pr__nfet_01v8 l=0.5 w=30 nf=2
+XM2 x5 vinn tail vss sky130_fd_pr__nfet_01v8 l=0.5 w=30 nf=2
+XMP3 x3 x3 vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=51.2 nf=4
+XMP4 x4 x3 vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=51.2 nf=4
+XMP5 x5 x5 vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=51.2 nf=4
+XMP6 gp x5 vdd vdd sky130_fd_pr__pfet_01v8 l=0.8 w=51.2 nf=4
+XMN7 x4 x4 vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=24 nf=2
+XMN8 gn x4 vss vss sky130_fd_pr__nfet_01v8 l=0.8 w=24 nf=2
+* Floating complementary Monticelli control between output gates.
+XMCN gp vbn gn vss sky130_fd_pr__nfet_01v8 l=0.3 w=7.6 nf=1
+XMCP gn vbp gp vdd sky130_fd_pr__pfet_01v8 l=0.3 w=7.6 nf=1
+RBAT gp gn 2meg
+* Complementary common-source output pair and compensation.
+XMPO vout gp vdd vdd sky130_fd_pr__pfet_01v8 l=0.3 w=252 nf=18
+XMNO vout gn vss vss sky130_fd_pr__nfet_01v8 l=0.3 w=48 nf=4
+CC1 vout cz1 1.5p
+RZ1 cz1 gn 680
+CC2 vout cz2 1.5p
+RZ2 cz2 gp 680
+.ends low_power_line_driver

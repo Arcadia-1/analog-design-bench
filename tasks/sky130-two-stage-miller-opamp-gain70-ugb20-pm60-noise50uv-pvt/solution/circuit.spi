@@ -1,0 +1,28 @@
+* Two-stage single-ended CMOS op amp with Miller compensation (sky130 1.8V).
+* Stage 1: NMOS diff pair with wide-swing cascoded PMOS current-mirror load.
+* Stage 2: PMOS common-source with NMOS current-sink load, RC Miller network.
+* All currents mirrored from the 50 uA reference forced into iref.
+* Every MOS uses an integer-micrometer unit-finger width (W/nf).
+.subckt two_stage_miller_opamp vss iref vdd vinn vinp vout
+* ---- NMOS bias mirrors (master diode on iref) ----
+XMB1 iref iref vss vss sky130_fd_pr__nfet_01v8 l=1.0 w=50 nf=10
+XM5  ntail iref vss vss sky130_fd_pr__nfet_01v8 l=1.0 w=60 nf=12
+XM7  vout iref vss vss sky130_fd_pr__nfet_01v8 l=1.0 w=140 nf=28
+XMB7 vbp iref vss vss sky130_fd_pr__nfet_01v8 l=1.0 w=10 nf=2
+* ---- PMOS cascode bias generator (source-degenerated diode) ----
+RB vdd nrb 22k
+XMB6 vbp vbp nrb vdd sky130_fd_pr__pfet_01v8 l=0.35 w=10 nf=2
+* ---- Input differential pair ----
+XM1 nb vinn ntail vss sky130_fd_pr__nfet_01v8 l=0.7 w=28 nf=14
+XM2 na vinp ntail vss sky130_fd_pr__nfet_01v8 l=0.7 w=28 nf=14
+* ---- Wide-swing cascoded PMOS mirror load ----
+XM3 nc3 nb vdd vdd sky130_fd_pr__pfet_01v8 l=0.35 w=32 nf=8
+XM4 nc4 nb vdd vdd sky130_fd_pr__pfet_01v8 l=0.35 w=32 nf=8
+XMC3 nb vbp nc3 vdd sky130_fd_pr__pfet_01v8 l=0.35 w=32 nf=8
+XMC4 na vbp nc4 vdd sky130_fd_pr__pfet_01v8 l=0.35 w=32 nf=8
+* ---- Output stage ----
+XM6 vout na vdd vdd sky130_fd_pr__pfet_01v8 l=0.35 w=140 nf=28
+* ---- Miller compensation with nulling resistor ----
+RZ na nz 700
+CC nz vout 2p
+.ends two_stage_miller_opamp

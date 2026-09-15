@@ -1,0 +1,4 @@
+* Implement the declared bandgap-reference interface.
+.subckt bandgap AVDD AVSS VBG SUB
+* TODO: implement the circuit.
+.ends bandgap

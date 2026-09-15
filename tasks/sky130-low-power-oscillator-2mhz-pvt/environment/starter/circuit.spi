@@ -1,0 +1,4 @@
+* Implement the exact recovered interface; pin meaning is intentionally not guessed.
+.subckt osc_2m AVDD AVSS CLKO IBN2U
+* TODO: implement the circuit.
+.ends osc_2m

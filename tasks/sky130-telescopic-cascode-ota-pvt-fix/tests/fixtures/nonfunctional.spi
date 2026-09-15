@@ -1,0 +1,5 @@
+.subckt telescopic_cascode_ota vss iref vdd vinn vinp vocm voutn voutp
+XKEEP iref iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=1 nf=1
+ROUTP voutp vss 1k
+ROUTN voutn vss 1k
+.ends telescopic_cascode_ota

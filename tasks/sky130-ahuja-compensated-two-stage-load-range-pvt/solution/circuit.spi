@@ -1,0 +1,36 @@
+* Two-stage OTA with indirect (Ahuja / current-buffer) compensation.
+* Stage 1 is an NMOS pair folded through PMOS current buffers into a
+* wide-swing NMOS cascode mirror.  The compensation capacitor returns
+* from vout to the source of the output-branch PMOS cascode.
+.subckt ahuja_ota vss iref vdd vinp vinn vout
+
+* Bias rails derived from the single 50 uA reference.
+XMB1 iref iref vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=24 nf=4
+XMT tail iref vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=14 nf=2
+XMS1 vcp iref vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=12 nf=2
+XMBC vbp vbp vdd vdd sky130_fd_pr__pfet_01v8 l=0.5 w=32 nf=4
+RCP vbp vcp 10k
+CBP vcp vdd 5p
+CBB vbp vdd 2p
+XMS2 vcn vbp vdd vdd sky130_fd_pr__pfet_01v8 l=0.5 w=32 nf=4
+RCN vcn ncn 10k
+XMBN ncn ncn vss vss sky130_fd_pr__nfet_01v8 l=0.35 w=5.2 nf=1
+CBN vcn vss 2p
+
+* Folded-cascode first stage.
+XM1 f1 vinn tail vss sky130_fd_pr__nfet_01v8 l=0.5 w=10 nf=2
+XM2 f2 vinp tail vss sky130_fd_pr__nfet_01v8 l=0.5 w=10 nf=2
+XM3 f1 vbp vdd vdd sky130_fd_pr__pfet_01v8 l=0.5 w=128 nf=16
+XM4 f2 vbp vdd vdd sky130_fd_pr__pfet_01v8 l=0.5 w=128 nf=16
+XM3C g1 vcp f1 vdd sky130_fd_pr__pfet_01v8 l=0.5 w=110 nf=14
+XM4C va vcp f2 vdd sky130_fd_pr__pfet_01v8 l=0.5 w=110 nf=14
+XM5 s5 g1 vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=30 nf=5
+XM6 s6 g1 vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=30 nf=5
+XM5C g1 vcn s5 vss sky130_fd_pr__nfet_01v8 l=0.35 w=18 nf=3
+XM6C va vcn s6 vss sky130_fd_pr__nfet_01v8 l=0.35 w=18 nf=3
+
+* Common-source second stage and indirect compensation.
+XM8 vout va vss vss sky130_fd_pr__nfet_01v8 l=0.3 w=54 nf=6
+XM9 vout vbp vdd vdd sky130_fd_pr__pfet_01v8 l=0.5 w=384 nf=48
+CC vout f2 3.3p
+.ends ahuja_ota

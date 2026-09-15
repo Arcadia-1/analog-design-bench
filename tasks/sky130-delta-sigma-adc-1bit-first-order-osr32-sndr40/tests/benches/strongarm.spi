@@ -1,0 +1,12 @@
+* Dynamic StrongARM comparator; low clock resets, high clock evaluates.
+.subckt strongarm voutp voutn vinp vinn clk vdd vss
+XRST1 voutp clk vdd vdd sky130_fd_pr__pfet_01v8 w=2 l=0.15 nf=1
+XRST2 voutn clk vdd vdd sky130_fd_pr__pfet_01v8 w=2 l=0.15 nf=1
+XTAIL tail clk vss vss sky130_fd_pr__nfet_01v8 w=10 l=0.15 nf=2
+XINP voutp vinp tail vss sky130_fd_pr__nfet_01v8 w=10 l=0.15 nf=2
+XINN voutn vinn tail vss sky130_fd_pr__nfet_01v8 w=10 l=0.15 nf=2
+XPL1 voutp voutn vdd vdd sky130_fd_pr__pfet_01v8 w=10 l=0.15 nf=2
+XPL2 voutn voutp vdd vdd sky130_fd_pr__pfet_01v8 w=10 l=0.15 nf=2
+CCP voutp vss 200f
+CCN voutn vss 200f
+.ends strongarm

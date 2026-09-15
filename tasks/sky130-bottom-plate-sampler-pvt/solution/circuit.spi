@@ -1,0 +1,75 @@
+.subckt boot_drv VIN CLK VDD VG
+XINVN_P CLKN CLK VDD VDD sky130_fd_pr__pfet_01v8 w=8 l=0.15 nf=4
+XINVN_N CLKN CLK 0 0     sky130_fd_pr__nfet_01v8 w=8 l=0.15 nf=4
+XINVP_P CLKP CLKN VDD VDD sky130_fd_pr__pfet_01v8 w=8 l=0.15 nf=4
+XINVP_N CLKP CLKN 0 0     sky130_fd_pr__nfet_01v8 w=8 l=0.15 nf=4
+C_BOOT CBT CBB 1.0p
+XDCHG CBB CLKN 0 0     sky130_fd_pr__nfet_01v8 w=8 l=0.15 nf=4
+XPCHG CG  CLKP VDD VDD sky130_fd_pr__pfet_01v8 w=8 l=0.15 nf=4
+XLIM  VDD VG   CBT CBT sky130_fd_pr__pfet_01v8 w=8 l=0.15 nf=4
+XPRE  VDD CLK  VG  0   sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+XGTRK CG  CLKP CBB 0   sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+XBPP  VG   CG  CBT CBT sky130_fd_pr__pfet_01v8 w=8 l=0.15 nf=4
+XPVIN CBB VG   VIN 0   sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+XCASC VG   VDD CLKP 0  sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+.ends boot_drv
+
+.subckt clk_inv_s a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+.ends clk_inv_s
+
+.subckt clk_inv_e a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+.ends clk_inv_e
+
+.subckt clk_nand a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+.ends clk_nand
+
+.subckt clk_nand_o a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+.ends clk_nand_o
+
+.subckt bottom_plate_sampler vinp vinn clk vcm vdd vss vsp vsn vtopp vtopn
+XI0 clk nclk vdd vss clk_inv_s
+XI1 nclk clkbuf vdd vss clk_inv_s
+
+XN1 clkbuf fb2 n1b vdd vss clk_nand
+XIE1 n1b clkse vdd vss clk_inv_e
+XD11 clkse d11 vdd vss clk_inv_s
+XD12 d11 d1 vdd vss clk_inv_s
+XI2 d1 q1 vdd vss clk_inv_s
+XO1 q1 n1b clks vdd vss clk_nand_o
+XF11 q1 f11 vdd vss clk_inv_s
+XF12 f11 fb1 vdd vss clk_inv_s
+
+XN2 nclk fb1 n2b vdd vss clk_nand
+XIE2 n2b phi2e vdd vss clk_inv_e
+XD21 phi2e d21 vdd vss clk_inv_s
+XD22 d21 d2 vdd vss clk_inv_s
+XI3 d2 q2 vdd vss clk_inv_s
+XO2 q2 n2b phi2 vdd vss clk_nand_o
+XF21 q2 f21 vdd vss clk_inv_s
+XF22 f21 fb2 vdd vss clk_inv_s
+
+XB_P vinp clks vdd vgp boot_drv
+XB_N vinn clks vdd vgn boot_drv
+XB_CM vcm clkse vdd vg boot_drv
+
+C_P vsp vtopp 1p
+C_N vsn vtopn 1p
+
+XM_P vsp vgp vinp vss sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+XM_N vsn vgn vinn vss sky130_fd_pr__nfet_01v8 w=16 l=0.15 nf=8
+XM_CM_P vtopp vg vcm vss sky130_fd_pr__nfet_01v8 w=2 l=0.15 nf=2
+XM_CM_N vtopn vg vcm vss sky130_fd_pr__nfet_01v8 w=2 l=0.15 nf=2
+XM_TS vtopp vg vtopn vss sky130_fd_pr__nfet_01v8 w=20 l=0.15 nf=20
+.ends bottom_plate_sampler

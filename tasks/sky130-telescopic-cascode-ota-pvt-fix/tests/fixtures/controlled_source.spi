@@ -1,0 +1,3 @@
+.subckt telescopic_cascode_ota vss iref vdd vinn vinp vocm voutn voutp
+EFAKE voutp vss vinp vinn 1
+.ends telescopic_cascode_ota

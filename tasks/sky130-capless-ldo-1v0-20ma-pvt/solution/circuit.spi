@@ -1,0 +1,43 @@
+* Fully-integrated external-capacitor-free LDO: 1.0 V from 1.5-1.8 V,
+* 0-20 mA DC and 0.5-20 mA dynamic load.
+* Architecture: symmetric current-mirror OTA (lvt-P input pair) directly
+* driving a 3 mm std-pfet pass device; Miller Rz/Cm compensation across the pass
+* stage; internal 30k/20k feedback divider with lead capacitor; split on-chip
+* output capacitance (damped branch + direct branch); supply-independent
+* beta-multiplier bias with an always-on high-value starter resistor.
+.subckt capless_ldo vin vout vss vref
+* bias: beta-multiplier (~8 uA) + starter
+Rbs   vin  nb   750k
+Rda   vin  sa   12k
+Rdb   vin  sb   12k
+XMPA  nb   pb   sa  vin sky130_fd_pr__pfet_01v8_lvt  l=1.0 w=22
+XMPB  pb   pb   sb  vin sky130_fd_pr__pfet_01v8_lvt  l=1.0 w=22
+XMN1  nb   nb   vss vss sky130_fd_pr__nfet_01v8      l=1.0 w=10
+XMN2  pb   nb   ns  vss sky130_fd_pr__nfet_01v8      l=1.0 w=40
+Rs    ns   vss  7.8k
+* error amplifier: symmetric mirror OTA, lvt-P pair, K~3.5 mirrors
+Rdt   vin  st   12k
+XMPT  tail pb   st   vin  sky130_fd_pr__pfet_01v8_lvt l=1.0 w=22
+XM1A  d4   vref tail tail sky130_fd_pr__pfet_01v8_lvt l=0.5 w=24
+XM1B  d3   fb   tail tail sky130_fd_pr__pfet_01v8_lvt l=0.5 w=24
+XM3   d3   d3   vss  vss  sky130_fd_pr__nfet_01v8     l=1.5 w=25
+XM4   d4   d4   vss  vss  sky130_fd_pr__nfet_01v8     l=1.5 w=25
+XM5   gate d3   vss  vss  sky130_fd_pr__nfet_01v8     l=1.5 w=88
+XM6   d7   d4   vss  vss  sky130_fd_pr__nfet_01v8     l=1.5 w=88
+Rd7   vin  s7   13k
+Rd8   vin  s8   13k
+XM7   d7   d7   s7   vin  sky130_fd_pr__pfet_01v8_lvt l=1.0 w=22
+XM8   gate d7   s8   vin  sky130_fd_pr__pfet_01v8_lvt l=1.0 w=22
+* pass device and Miller compensation
+XMP   vout gate vin vin sky130_fd_pr__pfet_01v8 l=0.35 w=500 nf=10 m=6
+Cm    gate cmx  3p
+Rz    cmx  vout 2.2k
+* internal feedback divider with lead capacitor
+R1    vout fb   30k
+Cf    vout fb   4p
+R2    fb   vss 20k
+* on-chip output capacitance: damped branch + direct branch (977 pF total)
+Resr  vout vc1 150
+C1    vc1  vss 850p
+C2    vout vss 120p
+.ends capless_ldo

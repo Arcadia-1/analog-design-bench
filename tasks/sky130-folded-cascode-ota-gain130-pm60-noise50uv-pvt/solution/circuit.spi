@@ -1,0 +1,98 @@
+* Sky130 gain-boosted two-stage folded-cascode OTA reference implementation.
+* The first stage is an NMOS-input folded cascode with local PMOS/NMOS
+* cascode gain boosters and a low-voltage wide-swing NMOS mirror. The
+* second stage is NMOS common source with a PMOS current-source load and
+* series-RC Miller compensation. The input-pair length is only 0.5 um;
+* gain comes from the topology rather than abnormally long input devices.
+* iref is the only external bias: internal current mirrors and MOS replicas
+* derive every bias rail, with no supply-divider voltage reference.
+.subckt folded_cascode_ota vss iref vdd vinn vinp vout
+XREF iref iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=20 nf=4
+XTAIL tail iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=92 nf=12
+
+XNBP vbp iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=20 nf=4
+XPBP vbp vbp vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=96 nf=12
+XNPC vpc iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=20 nf=4
+XPPC vpc_hi vpc_hi vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=20 nf=4
+* Shift the PMOS cascode bias down without forcing its gm/Id below 10.
+RPC vpc_hi vpc 1k
+* Low-voltage NMOS cascode-gate generator.
+XBCUR pcb iref vss vss sky130_fd_pr__nfet_01v8 l=1.4 w=30 nf=2
+XPCB pcb pcb vdd vdd sky130_fd_pr__pfet_01v8 l=1.5 w=150 nf=10
+XPB2 ncb pcb vdd vdd sky130_fd_pr__pfet_01v8 l=1.5 w=150 nf=10
+* Source degeneration adds the required cascode-gate level without forcing
+* the diode NMOS into the gm/Id < 5 strong-inversion corner.
+XNCB ncb ncb ncbs vss sky130_fd_pr__nfet_01v8 l=1.5 w=50 nf=5
+RNCB ncbs vss 4.8k
+* Auxiliary-amplifier bias rail.
+XBAUX pda iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+XPDA pda pda vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=64 nf=16
+* Low-overdrive PMOS mirror for the NMOS-cascode auxiliary amplifier.
+* The larger diode device keeps the tail sources saturated at 1.62 V/125 C.
+XNTAUX ntb iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+XPNTB ntb ntb vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=128 nf=16
+
+* Current-derived cascode-source replicas.  Both branches ultimately draw
+* mirrored current from iref; no supply-divider voltage reference is used.
+XNRBI nref iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=2 nf=1
+XNRS vdd ncb nref vss sky130_fd_pr__nfet_01v8 l=0.5 w=8 nf=2
+XPRBI pref pda vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=8 nf=2
+XPRS vss vpc pref vdd sky130_fd_pr__pfet_01v8 l=0.5 w=256 nf=32
+
+XINP p1 vinn sinp vss sky130_fd_pr__nfet_01v8 l=0.5 w=200 nf=20
+XINN p2 vinp sinn vss sky130_fd_pr__nfet_01v8 l=0.5 w=200 nf=20
+RINP sinp tail 100
+RINN sinn tail 100
+XFP p1 vbp vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=384 nf=48
+XFN p2 vbp vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=390 nf=48
+XFCP mirror vpc p1 vdd sky130_fd_pr__pfet_01v8 l=0.5 w=144 nf=18
+XFCN nfirst gpc p2 vdd sky130_fd_pr__pfet_01v8 l=0.5 w=144 nf=18
+
+* Low-voltage wide-swing cascoded NMOS mirror load.
+XMD mirror ncb n1 vss sky130_fd_pr__nfet_01v8 l=0.5 w=18 nf=3
+XMO nfirst gnc n2 vss sky130_fd_pr__nfet_01v8 l=0.5 w=54 nf=9
+XCD n1 mirror vss vss sky130_fd_pr__nfet_01v8 l=1 w=24 nf=4
+XCO n2 mirror vss vss sky130_fd_pr__nfet_01v8 l=1 w=24 nf=4
+
+* PMOS-cascode gain boost: matched current-biased MOS source followers move
+* the high folding-node and replica voltages into the PMOS-input auxiliary
+* amplifier's common-mode range without using a resistive divider.
+XHS1I hs1 iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=3.2 nf=1
+XHS1F vdd p2 hs1 vss sky130_fd_pr__nfet_01v8 l=0.5 w=0.5 nf=1
+XHR1I hr1 iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=3.2 nf=1
+XHR1F vdd pref hr1 vss sky130_fd_pr__nfet_01v8 l=0.5 w=0.5 nf=1
+XPT apt pda vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=20 nf=4
+XPA pgd hr1 apt vdd sky130_fd_pr__pfet_01v8 l=1 w=128 nf=16
+XPB gpc hs1 apt vdd sky130_fd_pr__pfet_01v8 l=1 w=128 nf=16
+XPMA pgd pgd vss vss sky130_fd_pr__nfet_01v8 l=2 w=3 nf=1
+XPMB gpc pgd vss vss sky130_fd_pr__nfet_01v8 l=2 w=0.6 nf=1
+
+* NMOS-cascode gain boost: regulate the lower cascode source against
+* a supply-tracking low-side reference.
+* Matched iref-derived resistor shifts lower both auxiliary inputs without
+* disturbing the main ncb rail, preserving cascode headroom at mixed corners.
+XNRD nrh iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=2 nf=1
+XN2D n2h iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=2 nf=1
+RNRD nref nrh 20k
+RN2D n2 n2h 20k
+XNT1 ant ntb vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=880 nf=55
+XNT2 ant ntb vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=880 nf=55
+XNA ngd nrh ant vdd sky130_fd_pr__pfet_01v8 l=0.5 w=60 nf=12
+XNB gnc n2h ant vdd sky130_fd_pr__pfet_01v8 l=0.5 w=60 nf=12
+XNMA ngd ngd vss vss sky130_fd_pr__nfet_01v8 l=2 w=48 nf=6
+XNMB gnc ngd vss vss sky130_fd_pr__nfet_01v8 l=2 w=59 nf=6
+* Keep both gain-boost loops active at DC while AC-grounding their outputs
+* below the main-loop UGB.  The asymmetric compensation reflects the much
+* slower PMOS booster and avoids the original pair of area-heavy 10 pF caps.
+CGPC gpc vdd 3p
+CGNC gnc vss 9p
+
+* Wideband NMOS common-source output stage with an iref-derived PMOS load.
+XOBN obias iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=80 nf=8
+XOBP obias obias vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=96 nf=24
+XOUT nout nfirst vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=120 nf=22
+XOUTC vout ncb nout vss sky130_fd_pr__nfet_01v8 l=0.15 w=120 nf=22
+XLOAD vout obias vdd vdd sky130_fd_pr__pfet_01v8 l=0.6 w=320 nf=48
+CCOMP vout comp 1.37p
+RCOMP comp nfirst 700
+.ends folded_cascode_ota

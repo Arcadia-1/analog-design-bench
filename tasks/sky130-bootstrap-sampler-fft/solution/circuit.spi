@@ -1,0 +1,19 @@
+* Differential bootstrap gate driver.
+.subckt bootstrap_track_hold_cell vdd vss clk_inverted vin gate_boost
+CBOOTSTRAP bootstrap_top bootstrap_bottom 950f
+XCLK_INV_N clk_internal clk_inverted vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=8
+XCLK_INV_P clk_internal clk_inverted vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=32 nf=16
+XBOOT_CAP_DISCHARGE bootstrap_bottom clk_inverted vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=8
+XGATE_CONTROL_PRECHARGE gate_control clk_internal vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=16 nf=8
+XBOOTSTRAP_CLAMP vdd gate_boost bootstrap_top bootstrap_top sky130_fd_pr__pfet_01v8 l=0.15 w=32 nf=16
+XBOOTSTRAP_PRECHARGE vdd clk_internal gate_boost vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=8
+XGATE_CONTROL_TRACK gate_control clk_internal bootstrap_bottom vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=8
+XBOOTSTRAP_GATE_TRANSFER gate_boost gate_control bootstrap_top bootstrap_top sky130_fd_pr__pfet_01v8 l=0.15 w=32 nf=16
+XINPUT_TRACK bootstrap_bottom gate_boost vin vss sky130_fd_pr__nfet_01v8 l=0.15 w=32 nf=16
+XBOOTSTRAP_OFF_CLAMP gate_boost vdd clk_internal vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=8
+.ends bootstrap_track_hold_cell
+
+.subckt bootstrap_gate_driver vdd vss clk vinp vinn gatep gaten
+XBOOTSTRAP_P vdd vss clk vinp gatep bootstrap_track_hold_cell
+XBOOTSTRAP_N vdd vss clk vinn gaten bootstrap_track_hold_cell
+.ends bootstrap_gate_driver

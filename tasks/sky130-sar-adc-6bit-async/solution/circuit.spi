@@ -1,0 +1,244 @@
+* Sky130 six-bit asynchronous differential SAR ADC reference.
+* The bootstrap, 640 fF/side CDAC, comparator, and VALID-driven control are transistor-level.
+.subckt sar4_clock_inv a y vdd vss
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=16
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=32 nf=16
+.ends sar4_clock_inv
+
+.subckt sar4_delay_inv a y vdd vss
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+.ends sar4_delay_inv
+
+.subckt sar4_cmp_delay out outn inp inn vdd
+* A minimum-length tapered buffer pair drives the comparator handshake clock.
+XI1 inp d1 vdd inn sar4_delay_inv
+XI2 d1 out vdd outn sar4_drive_inv
+.ends sar4_cmp_delay
+
+.subckt sar_comparator clk outn outp vss vdd vinn vinp
+XM7 XP CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM9 XN CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM5 OUTN LN VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM4 OUTP LP VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM3 LN CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM2 LP CLK VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XM1 LN LP VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XM0 LP LN VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XM14 net1 CLK VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+XM13 XN VINN net1 VSS sky130_fd_pr__nfet_01v8 l=0.15 w=20 nf=20
+XM12 XP VINP net1 VSS sky130_fd_pr__nfet_01v8 l=0.15 w=20 nf=20
+XM11 OUTN LN VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM10 OUTP LP VSS VSS sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM8 LN LP XN VSS sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+XM6 LP LN XP VSS sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+.ends sar_comparator
+.subckt sar4_bootstrap_switch clks gnd vdd vin vout
+XM9 net4 CLKS net3 GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM8 net4 GATE net3 GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM10 CLKSB CLKS GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XM4 net2 CLKSB GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM3 GATE VDD net2 GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM2 VIN GATE VOUT GND sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM1 net3 GATE VIN GND sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=4
+XM0 net3 CLKSB GND GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XM11 CLKSB CLKS VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM7 net4 CLKS VDD VDD sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM6 GATE net4 net1 net1 sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XM5 VDD GATE net1 net1 sky130_fd_pr__pfet_01v8 l=0.15 w=6 nf=2
+C0 net1 net3 1p
+.ends sar4_bootstrap_switch
+.subckt sar6_cdac_half_6bit clks dctrl5 dctrl4 dctrl3 dctrl2 dctrl1 gnd vdd vin vrefn vrefp vtop
+XI4 CLKS GND VDD VIN VTOP sar4_bootstrap_switch
+* Explicit capacitance per side is 640 fF. The small dummy value compensates
+* fixed top-plate/device parasitics while the five switched caps remain binary weighted.
+C5 VTOP GND 2.078125f
+C4 VTOP VBOT1 20.578125f
+C3 VTOP VBOT2 41.15625f
+C2 VTOP VBOT3 82.3125f
+C1 VTOP VBOT4 164.625f
+C0 VTOP VBOT5 329.25f
+XP1 VBOT1 DCTRL1 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=3 nf=1
+XP2 VBOT2 DCTRL2 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=6 nf=2
+XP3 VBOT3 DCTRL3 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=12 nf=4
+XP4 VBOT4 DCTRL4 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=8
+XP5 VBOT5 DCTRL5 VREFP VDD sky130_fd_pr__pfet_01v8 l=0.15 w=48 nf=16
+XN1 VBOT1 DCTRL1 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XN2 VBOT2 DCTRL2 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+XN3 VBOT3 DCTRL3 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+XN4 VBOT4 DCTRL4 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+XN5 VBOT5 DCTRL5 VREFN GND sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=16
+.ends sar6_cdac_half_6bit
+.subckt sar4_std_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+.ends sar4_std_inv
+
+.subckt sar4_drive_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=4
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=4
+.ends sar4_drive_inv
+
+.subckt sar4_medium_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+.ends sar4_medium_inv
+
+.subckt sar4_cdac_output_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=16 nf=8
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=8
+.ends sar4_cdac_output_inv
+
+.subckt sar4_cdac_inv_x8 a y vdd vss
+XI a y vdd vss sar4_cdac_output_inv
+.ends sar4_cdac_inv_x8
+
+.subckt sar4_std_nand2 a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=1
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=1
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+.ends sar4_std_nand2
+
+.subckt sar4_std_tg a b en enb vdd vss
+XN a en b vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=1
+XP a enb b vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+.ends sar4_std_tg
+
+.subckt sar4_std_latch d q en enb vdd vss
+XTI d x en enb vdd vss sar4_std_tg
+XI1 x xb vdd vss sar4_std_inv
+XI2 xb q vdd vss sar4_drive_inv
+XTF q x enb en vdd vss sar4_std_tg
+.ends sar4_std_latch
+
+.subckt sar4_std_latch_reset d q en enb rst vdd vss
+XTI d x en enb vdd vss sar4_std_tg
+XI1 x xb vdd vss sar4_std_inv
+XI2 xb q vdd vss sar4_drive_inv
+XTF q x enb en vdd vss sar4_std_tg
+XR x rst vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=16 nf=4
+.ends sar4_std_latch_reset
+
+.subckt sar4_and2_x1 y vdd vss a b
+XN a b yn vdd vss sar4_std_nand2
+XI yn y vdd vss sar4_std_inv
+.ends sar4_and2_x1
+
+.subckt sar4_or2_x4 y vdd vss a b
+XIA a an vdd vss sar4_std_inv
+XIB b bn vdd vss sar4_std_inv
+XN an bn y vdd vss sar4_std_nand2
+.ends sar4_or2_x4
+
+.subckt sar4_inverter_x1 y vdd vss a
+XI a y vdd vss sar4_std_inv
+.ends sar4_inverter_x1
+
+.subckt sar4_inverter_x4 y vdd vss a
+XI a y vdd vss sar4_std_inv
+.ends sar4_inverter_x4
+
+.subckt sar4_dff_x1 q vdd vss ck d
+XIC ck ckb vdd vss sar4_medium_inv
+XLM d qm ckb ck vdd vss sar4_std_latch
+XLS qm q ck ckb vdd vss sar4_std_latch
+.ends sar4_dff_x1
+
+.subckt sar4_dff_reset_x1 q vdd vss ck d rn
+XIC ck ckb vdd vss sar4_medium_inv
+XIR rn rst vdd vss sar4_drive_inv
+XLM d qm ckb ck rst vdd vss sar4_std_latch_reset
+XLS qm q ck ckb rst vdd vss sar4_std_latch_reset
+.ends sar4_dff_reset_x1
+
+* Lightweight static cells for the Liu-style two-row SAR controller.  The
+* sequence row and decision row retain edge-triggered state, but present much
+* less clock and data capacitance than the original general-purpose cells.
+.subckt liu_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=1 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=0.5 nf=1
+.ends liu_inv
+
+.subckt liu_drive_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=2
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=2
+.ends liu_drive_inv
+
+.subckt liu_tg a b en enb vdd vss
+XN a en b vss sky130_fd_pr__nfet_01v8 l=0.15 w=1 nf=1
+XP a enb b vdd sky130_fd_pr__pfet_01v8 l=0.15 w=2 nf=1
+.ends liu_tg
+
+.subckt liu_latch d q en enb vdd vss
+XTI d x en enb vdd vss liu_tg
+XI1 x xb vdd vss liu_inv
+XI2 xb q vdd vss liu_drive_inv
+XTF q x enb en vdd vss liu_tg
+.ends liu_latch
+
+.subckt liu_latch_reset d q en enb rst vdd vss
+XTI d x en enb vdd vss liu_tg
+XI1 x xb vdd vss liu_inv
+XI2 xb q vdd vss liu_drive_inv
+XTF q x enb en vdd vss liu_tg
+XR x rst vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=2
+.ends liu_latch_reset
+
+.subckt liu_dff q vdd vss ck d
+XIC ck ckb vdd vss liu_inv
+XLM d qm ckb ck vdd vss liu_latch
+XLS qm q ck ckb vdd vss liu_latch
+.ends liu_dff
+
+.subckt liu_dff_reset q vdd vss ck d rn
+XIC ck ckb vdd vss liu_inv
+XIR rn rst vdd vss liu_drive_inv
+XLM d qm ckb ck rst vdd vss liu_latch_reset
+XLS qm q ck ckb rst vdd vss liu_latch_reset
+.ends liu_dff_reset
+
+.subckt sar6_async_logic_6bit clkc clks cmpck dcmpn dcmpp dctrln5 dctrln4 dctrln3 dctrln2 dctrln1 dctrlp5 dctrlp4 dctrlp3 dctrlp2 dctrlp1 do5 do4 do3 do2 do1 do0 gnd vdd
+XI76 DCTRLN0 VDD GND net26 CLK0 sar4_and2_x1
+XI67 DCTRLP0 VDD GND net28 CLK0 sar4_and2_x1
+XI55 net11 VDD GND net3 CLK_GATE sar4_and2_x1
+XI53 CLK_GATE VDD GND CLKC RDYB sar4_and2_x1
+XI77 net26 VDD GND CLK0 DCMPN liu_dff
+XI75 DCTRLN1 VDD GND CLK1 DCMPN CLKC liu_dff_reset
+XI73 DCTRLN2 VDD GND CLK2 DCMPN CLKC liu_dff_reset
+XI72 DCTRLN3 VDD GND CLK3 DCMPN CLKC liu_dff_reset
+XI71 DCTRLN4 VDD GND CLK4 DCMPN CLKC liu_dff_reset
+XI70 DCTRLN5_RAW VDD GND CLK5 DCMPP CLKC liu_dff_reset
+XI68 net28 VDD GND CLK0 DCMPP liu_dff
+XI65 DCTRLP1 VDD GND CLK1 DCMPP CLKC liu_dff_reset
+XI64 DCTRLP2 VDD GND CLK2 DCMPP CLKC liu_dff_reset
+XI63 DCTRLP3 VDD GND CLK3 DCMPP CLKC liu_dff_reset
+XI62 DCTRLP4 VDD GND CLK4 DCMPP CLKC liu_dff_reset
+XI61 DCTRLP5_RAW VDD GND CLK5 DCMPN CLKC liu_dff_reset
+XIEOC EOC VDD GND CLK0 net3 sar4_and2_x1
+XI60 DO0 VDD GND EOC DCTRLP0 liu_dff
+XI58 DO1 VDD GND EOC DCTRLP1 liu_dff
+XI57 DO2 VDD GND EOC DCTRLP2 liu_dff
+XI56 DO3 VDD GND EOC DCTRLP3 liu_dff
+XI59 DO4 VDD GND EOC DCTRLP4 liu_dff
+XI54O DO5 VDD GND EOC DCTRLP5 liu_dff
+XBN5 DCTRLN5_RAW DCTRLN5 VDD GND sar4_cdac_inv_x8
+XBP5 DCTRLP5_RAW DCTRLP5 VDD GND sar4_cdac_inv_x8
+XI42 RDYB VDD GND CLK0 sar4_inverter_x4
+XDELAY0 CMPCK GND net11 GND VDD sar4_cmp_delay
+XI41 CLK0 VDD GND VALID CLK1 CLKC liu_dff_reset
+XI40 CLK1 VDD GND VALID CLK2 CLKC liu_dff_reset
+XI39 CLK2 VDD GND VALID CLK3 CLKC liu_dff_reset
+XI38 CLK3 VDD GND VALID CLK4 CLKC liu_dff_reset
+XI37 CLK4 VDD GND VALID CLK5 CLKC liu_dff_reset
+XI36 CLK5 VDD GND VALID VDD CLKC liu_dff_reset
+XI52 VALID VDD GND DCMPP DCMPN sar4_or2_x4
+XI54 net3 VDD GND VALID sar4_inverter_x1
+.ends sar6_async_logic_6bit
+.subckt sar_adc_6bit_async clks dout5 dout4 dout3 dout2 dout1 dout0 vss vdd vinn vinp vrefn vrefp
+XCLKC CLKS CLKC VDD VSS sar4_clock_inv
+XI11 CMPCK DCMPN DCMPP VSS VDD VRESN VRESP sar_comparator
+XI10 CLKS DCTRLP5 DCTRLP4 DCTRLP3 DCTRLP2 DCTRLP1 VSS VDD VINP VREFN VREFP VRESP sar6_cdac_half_6bit
+XI9 CLKS DCTRLN5 DCTRLN4 DCTRLN3 DCTRLN2 DCTRLN1 VSS VDD VINN VREFN VREFP VRESN sar6_cdac_half_6bit
+XI12 CLKC CLKS CMPCK DCMPN DCMPP DCTRLN5 DCTRLN4 DCTRLN3 DCTRLN2 DCTRLN1 DCTRLP5 DCTRLP4 DCTRLP3 DCTRLP2 DCTRLP1 DOUT5 DOUT4 DOUT3 DOUT2 DOUT1 DOUT0 VSS VDD sar6_async_logic_6bit
+.ends sar_adc_6bit_async

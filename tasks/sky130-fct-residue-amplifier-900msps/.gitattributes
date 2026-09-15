@@ -1,0 +1,2 @@
+*.sh text eol=lf
+*.spi text eol=lf

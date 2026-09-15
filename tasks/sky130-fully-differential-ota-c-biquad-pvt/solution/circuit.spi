@@ -1,0 +1,92 @@
+* Sky130 fully differential OTA-C (Gm-C) biquad, f0 = 2 MHz Butterworth low-pass.
+* Three source-degenerated signal transconductors, a stronger damping Gm,
+* one transistor-level CMFB loop per state pair, a shared bias core, and the
+* grounded capacitor network that realizes the second-order section.
+* The first state is a true band-pass output (zero DC gain); the second state
+* is the low-pass output.  Q=sqrt(C1/C2)*(Gsignal/Gdamping).
+
+* Degenerated fully differential Gm core; load gates come from the node CMFB.
+.subckt gmc_core vss vdd vbn vctrl inp inn outp outn
+XTA ta vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+XTB tb vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+RDEG ta tb 19.1k
+XA outn inp ta vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+XB outp inn tb vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+XLA outn vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=96 nf=8
+XLB outp vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=96 nf=8
+.ends gmc_core
+
+* The band-pass state sums an additional damping current.  Its two signal Gm
+* cells therefore use about 1.3x PMOS load width while retaining the same NMOS Gm.
+.subckt gmc_core_bp vss vdd vbn vctrl inp inn outp outn
+XTA ta vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+XTB tb vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+RDEG ta tb 19.1k
+XA outn inp ta vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+XB outp inn tb vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+XLA outn vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=124 nf=10
+XLB outp vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=124 nf=10
+.ends gmc_core_bp
+
+* Damping Gm shares the first state's PMOS load bank.  Omitting a second load
+* pair avoids adding another common-mode actuator to the same integrating node.
+.subckt gmc_sink vss vbn inp inn outp outn
+XTA ta vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+XTB tb vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+RDEG ta tb 8k
+XA outn inp ta vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+XB outp inn tb vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=96 nf=8
+.ends gmc_sink
+
+* Common-mode feedback amplifier for one filter node pair.
+.subckt cmfb_amp vss vdd vbn vocm vsense vctrl
+XCTA cta vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+XCTB ctb vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+RCM cta ctb 5k
+XC1 cd vsense cta vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=24 nf=4
+XC2 vctrl vocm ctb vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=24 nf=4
+XCL1 cd cd vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=48 nf=4
+XCL2 vctrl vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=48 nf=4
+CCM vctrl vdd 500f
+.ends cmfb_amp
+
+* The band-pass state sums three NMOS Gm currents into two PMOS load banks.
+* A 3:1 load/replica width ratio centers that CMFB loop at zero input error.
+.subckt cmfb_amp_bp vss vdd vbn vocm vsense vctrl
+XCTA cta vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+XCTB ctb vbn vss vss sky130_fd_pr__nfet_01v8 l=1 w=8 nf=2
+RCM cta ctb 5k
+XC1 cd vsense cta vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=24 nf=4
+XC2 vctrl vocm ctb vss sky130_fd_pr__nfet_01v8_lvt l=0.5 w=24 nf=4
+XCL1 cd cd vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=40 nf=5
+XCL2 vctrl vctrl vdd vdd sky130_fd_pr__pfet_01v8 l=1 w=40 nf=5
+CCM vctrl vdd 100f
+.ends cmfb_amp_bp
+
+.subckt fd_ota_c_biquad vss iref vdd vinp vinn vocm vbpp vbpn voutp voutn
+* shared bias core: one external 20 uA reference
+XREF iref iref vss vss sky130_fd_pr__nfet_01v8 l=1 w=16 nf=2
+
+* input transconductor: vin -> bp node
+XGIN vss vdd iref vc1 vinp vinn vbpp vbpn gmc_core_bp
+* forward integrator: bp -> out
+XGF  vss vdd iref vc2 vbpp vbpn voutp voutn gmc_core
+* feedback transconductor: out -> bp (crossed = negative)
+XGB  vss vdd iref vc1 voutp voutn vbpn vbpp gmc_core_bp
+* damping transconductor: bp -> bp (crossed = lossy)
+XGQ  vss iref vbpp vbpn vbpn vbpp gmc_sink
+
+* one CMFB loop per filter node pair
+RS1A vbpp sense1 1Meg
+RS1B vbpn sense1 1Meg
+XCM1 vss vdd iref vocm sense1 vc1 cmfb_amp_bp
+RS2A voutp sense2 1Meg
+RS2B voutn sense2 1Meg
+XCM2 vss vdd iref vocm sense2 vc2 cmfb_amp
+
+* second-order capacitor network
+C1P vbpp vss 8p
+C1N vbpn vss 8p
+C2P voutp vss 4p
+C2N voutn vss 4p
+.ends fd_ota_c_biquad

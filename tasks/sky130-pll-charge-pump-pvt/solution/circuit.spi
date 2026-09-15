@@ -1,0 +1,55 @@
+* Sky130 PLL charge pump: current-steering, cascoded UP/DN branches,
+* replica-matched bias network derived only from iref (25 uA in).
+* XN d g s b sky130_fd_pr__nfet_01v8 l=0.5 w=8 nf=2
+* XP d g s b sky130_fd_pr__pfet_01v8 l=0.5 w=16 nf=4
+.subckt pll_charge_pump vss iref up dn vdd vout
+*
+* ---------- reference input: diode NMOS on iref (mirror master) ----------
+XN0 iref iref vss vss sky130_fd_pr__nfet_01v8 l=6 w=84 nf=4
+*
+* ---------- B2: PMOS cascode bias vbpc (Pcb diode fed by N-mirror) ----------
+XPCB vbpc vbpc vdd vdd sky130_fd_pr__pfet_01v8 l=3 w=27 nf=1
+XN2 vbpc iref vss vss sky130_fd_pr__nfet_01v8 l=6 w=42 nf=2
+*
+* ---------- B3: NMOS cascode bias vbnc (Ncb diode fed from vbpc source) ----------
+XP2X vbnc vbpc vdd vdd sky130_fd_pr__pfet_01v8 l=3 w=24 nf=1
+XNCB vbnc vbnc vss vss sky130_fd_pr__nfet_01v8 l=6 w=3.9 nf=1
+*
+* ---------- B1: replica branch -> vbp (cascoded diode, matches main UP stack) ----------
+XP0 n1a vbp vdd vdd sky130_fd_pr__pfet_01v8 l=3 w=150 nf=5
+XPC0 vbp vbpc n1a vdd sky130_fd_pr__pfet_01v8 l=0.9 w=90 nf=3
+XNC1 vbp vbnc n1b vss sky130_fd_pr__nfet_01v8 l=1.5 w=30 nf=2
+XN1 n1b iref vss vss sky130_fd_pr__nfet_01v8 l=6 w=43.98 nf=2
+*
+* ---------- UP branch: PMOS mirror + cascode + steering pair ----------
+XPM na vbp vdd vdd sky130_fd_pr__pfet_01v8 l=3 w=600 nf=20
+XPC nc vbpc na vdd sky130_fd_pr__pfet_01v8 l=0.9 w=360 nf=12
+XSUP vout upb nc vdd sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=3
+XSDU wu upd nc vdd sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=3
+XNWU wu wu vss vss sky130_fd_pr__nfet_01v8 l=0.5 w=3.5 nf=1
+*
+* ---------- DN branch: NMOS mirror + cascode + steering pair ----------
+XNM ne iref vss vss sky130_fd_pr__nfet_01v8 l=6 w=175.92 nf=8
+XNC nd vbnc ne vss sky130_fd_pr__nfet_01v8 l=1.5 w=120 nf=8
+XSDN vout dn nd vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+XSDD wd dnb nd vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=1
+XNWD vdd vdd wd vss sky130_fd_pr__nfet_01v8 l=0.5 w=4.5 nf=1
+*
+* ---------- input inverters/buffers (up/dn drive gates only) ----------
+XIP1 upb up vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=3
+XIN1 upb up vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=1
+XIP2 upd upb vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=1
+XIN2 upd upb vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=1
+XIP3 dnb dn vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=24 nf=3
+XIN3 dnb dn vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=0.6 nf=1
+*
+* ---------- bias filtering / node stiffening (no DC paths) ----------
+CBP vbp vdd 1e-12
+CBPC vbpc vdd 1e-12
+CBNC vbnc vss 1e-12
+CIR iref vss 0.8e-12
+CWU wu vss 0.4e-12
+CWD wd vdd 0.4e-12
+CNC nc vss 40e-15
+CND nd vss 30e-15
+.ends pll_charge_pump

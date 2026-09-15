@@ -1,0 +1,198 @@
+* Passing transistor-level reference using a differential comparator bank.
+.subckt fa_inv a y vdd vss
+XP y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XN y a vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=2 nf=1
+.ends fa_inv
+
+.subckt fa_nand2 a b y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XN1 y a nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=1
+XN2 nx b vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4 nf=1
+.ends fa_nand2
+
+.subckt fa_tg a b en enb vdd vss
+XN a en b vss sky130_fd_pr__nfet_01v8 l=0.15 w=32 nf=8
+XP a enb b vdd sky130_fd_pr__pfet_01v8 l=0.15 w=64 nf=16
+.ends fa_tg
+
+.subckt fa_nand4 a b c d y vdd vss
+XP1 y a vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XP2 y b vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XP3 y c vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XP4 y d vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=4 nf=1
+XN1 y a n1 vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+XN2 n1 b n2 vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+XN3 n2 c n3 vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+XN4 n3 d vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+.ends fa_nand4
+
+.subckt fa_comp clk vinp vinn outp outn vdd vss
+* StrongARM latch: outp/outn precharge high, outn falls when vinp > vinn
+XTAIL tail clk vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=32 nf=8
+XIN1 dx vinp tail vss sky130_fd_pr__nfet_01v8 l=0.18 w=16 nf=4
+XIN2 dy vinn tail vss sky130_fd_pr__nfet_01v8 l=0.18 w=16 nf=4
+XNL1 outn outp dx vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+XNL2 outp outn dy vss sky130_fd_pr__nfet_01v8 l=0.15 w=8 nf=2
+XPL1 outn outp vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+XPL2 outp outn vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+XPC1 outn clk vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+XPC2 outp clk vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+XPC3 dx clk vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+XPC4 dy clk vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=8 nf=2
+.ends fa_comp
+
+.subckt fa_sr sn rn q qb vdd vss
+XG1 sn qb q vdd vss fa_nand2
+XG2 rn q qb vdd vss fa_nand2
+.ends fa_sr
+
+.subckt flash4_xor a b y vdd vss
+X1 a b n1 vdd vss fa_nand2
+X2 a n1 n2 vdd vss fa_nand2
+X3 b n1 n3 vdd vss fa_nand2
+X4 n2 n3 y vdd vss fa_nand2
+.ends flash4_xor
+
+.subckt flash_adc_4bit clk dout3 dout2 dout1 dout0 vss vdd vinn vinp vrefn vrefp
+* Differential threshold ladder, 112.5 mV steps from 0 to 1.8 V.
+RL1 s1 vrefn 100
+RL2 s2 s1 100
+RL3 s3 s2 100
+RL4 s4 s3 100
+RL5 s5 s4 100
+RL6 s6 s5 100
+RL7 s7 s6 100
+RL8 s8 s7 100
+RL9 s9 s8 100
+RL10 s10 s9 100
+RL11 s11 s10 100
+RL12 s12 s11 100
+RL13 s13 s12 100
+RL14 s14 s13 100
+RL15 s15 s14 100
+RL16 vrefp s15 100
+* The external clock is the conversion clock; its inverse is the sample clock.
+XCLK clk clks vdd vss fa_inv
+
+* Shared differential top-plate track-and-hold.
+XTGP vinp vhp clks clk vdd vss fa_tg
+XTGN vinn vhn clks clk vdd vss fa_tg
+CHP vhp s8 20p
+CHN vhn s8 20p
+R1PA vhp vp1 200k
+R1PB s15 vp1 200k
+R1NA vhn vn1 200k
+R1NB s1 vn1 200k
+XC1 clk vp1 vn1 cp1 cn1 vdd vss fa_comp
+XS1 cn1 cp1 q1 qb1 vdd vss fa_sr
+R2PA vhp vp2 200k
+R2PB s14 vp2 200k
+R2NA vhn vn2 200k
+R2NB s2 vn2 200k
+XC2 clk vp2 vn2 cp2 cn2 vdd vss fa_comp
+XS2 cn2 cp2 q2 qb2 vdd vss fa_sr
+R3PA vhp vp3 200k
+R3PB s13 vp3 200k
+R3NA vhn vn3 200k
+R3NB s3 vn3 200k
+XC3 clk vp3 vn3 cp3 cn3 vdd vss fa_comp
+XS3 cn3 cp3 q3 qb3 vdd vss fa_sr
+R4PA vhp vp4 200k
+R4PB s12 vp4 200k
+R4NA vhn vn4 200k
+R4NB s4 vn4 200k
+XC4 clk vp4 vn4 cp4 cn4 vdd vss fa_comp
+XS4 cn4 cp4 q4 qb4 vdd vss fa_sr
+R5PA vhp vp5 200k
+R5PB s11 vp5 200k
+R5NA vhn vn5 200k
+R5NB s5 vn5 200k
+XC5 clk vp5 vn5 cp5 cn5 vdd vss fa_comp
+XS5 cn5 cp5 q5 qb5 vdd vss fa_sr
+R6PA vhp vp6 200k
+R6PB s10 vp6 200k
+R6NA vhn vn6 200k
+R6NB s6 vn6 200k
+XC6 clk vp6 vn6 cp6 cn6 vdd vss fa_comp
+XS6 cn6 cp6 q6 qb6 vdd vss fa_sr
+R7PA vhp vp7 200k
+R7PB s9 vp7 200k
+R7NA vhn vn7 200k
+R7NB s7 vn7 200k
+XC7 clk vp7 vn7 cp7 cn7 vdd vss fa_comp
+XS7 cn7 cp7 q7 qb7 vdd vss fa_sr
+R8PA vhp vp8 200k
+R8PB s8 vp8 200k
+R8NA vhn vn8 200k
+R8NB s8 vn8 200k
+XC8 clk vp8 vn8 cp8 cn8 vdd vss fa_comp
+XS8 cn8 cp8 q8 qb8 vdd vss fa_sr
+R9PA vhp vp9 200k
+R9PB s7 vp9 200k
+R9NA vhn vn9 200k
+R9NB s9 vn9 200k
+XC9 clk vp9 vn9 cp9 cn9 vdd vss fa_comp
+XS9 cn9 cp9 q9 qb9 vdd vss fa_sr
+R10PA vhp vp10 200k
+R10PB s6 vp10 200k
+R10NA vhn vn10 200k
+R10NB s10 vn10 200k
+XC10 clk vp10 vn10 cp10 cn10 vdd vss fa_comp
+XS10 cn10 cp10 q10 qb10 vdd vss fa_sr
+R11PA vhp vp11 200k
+R11PB s5 vp11 200k
+R11NA vhn vn11 200k
+R11NB s11 vn11 200k
+XC11 clk vp11 vn11 cp11 cn11 vdd vss fa_comp
+XS11 cn11 cp11 q11 qb11 vdd vss fa_sr
+R12PA vhp vp12 200k
+R12PB s4 vp12 200k
+R12NA vhn vn12 200k
+R12NB s12 vn12 200k
+XC12 clk vp12 vn12 cp12 cn12 vdd vss fa_comp
+XS12 cn12 cp12 q12 qb12 vdd vss fa_sr
+R13PA vhp vp13 200k
+R13PB s3 vp13 200k
+R13NA vhn vn13 200k
+R13NB s13 vn13 200k
+XC13 clk vp13 vn13 cp13 cn13 vdd vss fa_comp
+XS13 cn13 cp13 q13 qb13 vdd vss fa_sr
+R14PA vhp vp14 200k
+R14PB s2 vp14 200k
+R14NA vhn vn14 200k
+R14NB s14 vn14 200k
+XC14 clk vp14 vn14 cp14 cn14 vdd vss fa_comp
+XS14 cn14 cp14 q14 qb14 vdd vss fa_sr
+R15PA vhp vp15 200k
+R15PB s1 vp15 200k
+R15NA vhn vn15 200k
+R15NB s15 vn15 200k
+XC15 clk vp15 vn15 cp15 cn15 vdd vss fa_comp
+XS15 cn15 cp15 q15 qb15 vdd vss fa_sr
+* Balanced thermometer-to-binary XOR encoder.
+XB3A q8 b3n vdd vss fa_inv
+XB3B b3n dout3 vdd vss fa_inv
+X42 q4 q8 b2a vdd vss flash4_xor
+X4C b2a q12 dout2 vdd vss flash4_xor
+X21 q2 q4 b1a vdd vss flash4_xor
+X22 q6 q8 b1b vdd vss flash4_xor
+X23 q10 q12 b1c vdd vss flash4_xor
+X24 b1a b1b b1d vdd vss flash4_xor
+X25 b1c q14 b1e vdd vss flash4_xor
+X26 b1d b1e dout1 vdd vss flash4_xor
+X01 q1 q2 a1 vdd vss flash4_xor
+X02 q3 q4 a2 vdd vss flash4_xor
+X03 q5 q6 a3 vdd vss flash4_xor
+X04 q7 q8 a4 vdd vss flash4_xor
+X05 q9 q10 a5 vdd vss flash4_xor
+X06 q11 q12 a6 vdd vss flash4_xor
+X07 q13 q14 a7 vdd vss flash4_xor
+X08 a1 a2 x1 vdd vss flash4_xor
+X09 a3 a4 x2 vdd vss flash4_xor
+X10 a5 a6 x3 vdd vss flash4_xor
+X11 x1 x2 y1 vdd vss flash4_xor
+X12 x3 a7 y2 vdd vss flash4_xor
+X13 y1 y2 z1 vdd vss flash4_xor
+X14 z1 q15 dout0 vdd vss flash4_xor
+.ends flash_adc_4bit

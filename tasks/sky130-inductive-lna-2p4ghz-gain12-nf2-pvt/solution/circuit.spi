@@ -1,0 +1,32 @@
+* 2.4 GHz inductively degenerated narrow-band cascode LNA.
+.subckt inductive_lna vss iref vdd rfin rfout
+* The forced 50 uA reference establishes the input-gate voltage.  A scaled
+* NMOS/PMOS mirror feeds a two-device NMOS replica stack for cascode bias;
+* the replica devices are each one tenth the cascode width.
+XREF iref iref vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=7.2 nf=2
+XNSINK pgate iref vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=4.8 nf=1
+XPDIO pgate pgate vdd vdd sky130_fd_pr__pfet_01v8 l=0.50 w=24 nf=4
+XPMIR vcas pgate vdd vdd sky130_fd_pr__pfet_01v8 l=0.50 w=24 nf=4
+XCBOT vbias vbias vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=32 nf=2
+XCTOP vcas vcas vbias vss sky130_fd_pr__nfet_01v8 l=0.15 w=32 nf=2
+XCBN iref vss sky130_fd_pr__cap_mim_m3_1 w=63.05 l=63.05 mf=1
+XCBC vcas vss sky130_fd_pr__cap_mim_m3_1 w=44.53 l=44.53 mf=1
+
+* CIN is a large RF coupling capacitor.  One complete 5.79 nH PDK spiral,
+* together with the input-device capacitance, performs the gate match.
+XCIN rfin nin sky130_fd_pr__cap_mim_m3_1 w=49.81 l=49.81 mf=1
+XLG nin ng lgct vss sky130_fd_pr__ind_05_125
+XRBIAS iref ng vss sky130_fd_pr__res_high_po w=0.69 l=434
+
+* Common-source input device, one half of the official 1.521 nH spiral for
+* 0.7605 nH source degeneration, and a common-gate cascode.
+XIN nx ng ns vss sky130_fd_pr__nfet_01v8 l=0.15 w=480 nf=32
+XLS ns lsopen vss vss sky130_fd_pr__ind_03_90
+XCAS nd vcas nx vss sky130_fd_pr__nfet_01v8 l=0.15 w=320 nf=64
+
+* One complete 5.79 nH PDK spiral is the resonant drain load.  The two
+* capacitors transform its finite-Q impedance to the 50 ohm output port.
+XLD vdd nd ldct vss sky130_fd_pr__ind_05_125
+XCOUT nd rfout sky130_fd_pr__cap_mim_m3_1 w=17.79 l=17.79 mf=1
+XCMATCH rfout vss sky130_fd_pr__cap_mim_m3_1 w=28.1 l=28.1 mf=1
+.ends inductive_lna
