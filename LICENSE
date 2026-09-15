@@ -1,0 +1,43 @@
+Analog Design Bench Licensing Notice
+
+Copyright 2026 Analog Design Bench contributors.
+
+This repository contains software and benchmark content under different
+licenses. A file-specific license notice, when present, takes precedence over
+this notice.
+
+1. Software: Apache License 2.0
+
+The following software files are licensed under the Apache License 2.0,
+wherever they occur in the repository:
+
+- Python and shell source files (`.py` and `.sh`);
+- Dockerfiles; and
+- files carrying an explicit `SPDX-License-Identifier: Apache-2.0` notice.
+
+The full license text is in `LICENSES/Apache-2.0.txt`.
+
+2. Benchmark content: Creative Commons Attribution-NonCommercial 4.0
+International
+
+The following benchmark content is licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International license:
+
+- task manifests, task configurations, and task instructions;
+- SPICE netlists, circuit assets, non-software testbench fixtures, and reference
+  circuits;
+- reference results, measurements, tables, and other benchmark data;
+- documentation, figures, and website content; and
+- all other original non-software repository content not expressly identified
+  above.
+
+The full license text is in `LICENSES/CC-BY-NC-4.0.txt`.
+
+The public license does not grant commercial-use rights for the benchmark
+content. A separate commercial license may be available only through a written
+agreement with the relevant copyright holders. Contact the repository
+maintainers to discuss commercial licensing.
+
+Third-party materials, dependencies, container base images, the SKY130 PDK,
+ngspice, and other externally maintained components retain their respective
+licenses and are not relicensed by this notice.
