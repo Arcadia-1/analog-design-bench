@@ -10,4 +10,3 @@ authors = [{ name = "Suyang Song" }]
 task_id = "sky130-ota-5t-gain40-pm60-noise50uv-pvt"
 checker_allow_ideal = []
 revision = 3
-maturity = "L3"
